@@ -1,4 +1,4 @@
-import { HeaderFilterLevel } from "../types";
+import { HeaderFilterLevel } from '../types';
 
 const HIGH_RISK_BLOATERS = new Set([
   'cookie',
@@ -25,15 +25,15 @@ const HIDDEN_METADATA_RISKS = new Set([
 ]);
 
 const BLOATER_SETS: Record<HeaderFilterLevel, Set<string>[]> = {
-  "0": [HIGH_RISK_BLOATERS],
-  "1": [HIGH_RISK_BLOATERS, MEDIUM_RISK_BLOATERS],
-  "2": [HIGH_RISK_BLOATERS, MEDIUM_RISK_BLOATERS, HIDDEN_METADATA_RISKS],
-  "3": [HIGH_RISK_BLOATERS, MEDIUM_RISK_BLOATERS, HIDDEN_METADATA_RISKS],
+  '0': [HIGH_RISK_BLOATERS],
+  '1': [HIGH_RISK_BLOATERS, MEDIUM_RISK_BLOATERS],
+  '2': [HIGH_RISK_BLOATERS, MEDIUM_RISK_BLOATERS, HIDDEN_METADATA_RISKS],
+  '3': [HIGH_RISK_BLOATERS, MEDIUM_RISK_BLOATERS, HIDDEN_METADATA_RISKS],
 };
 
 export function filterHeaders(
   headers: Record<string, string>,
-  level: HeaderFilterLevel = HeaderFilterLevel.HIGH
+  level: HeaderFilterLevel = HeaderFilterLevel.HIGH,
 ): Record<string, string> {
   const blocklists = BLOATER_SETS[level];
   const result: Record<string, string> = {};

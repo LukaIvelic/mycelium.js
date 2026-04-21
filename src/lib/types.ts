@@ -17,7 +17,7 @@ export type UndiciRequest = {
   contentLength: number;
   contentType: string;
   headers: Record<string, string>;
-}
+};
 
 export type MarkedUndiciRequest = UndiciRequest & {
   traceId: string;
@@ -31,13 +31,13 @@ export type MarkedUndiciRequest = UndiciRequest & {
   serviceOrigin: string;
   serviceVersion?: string;
   serviceDescription?: string;
-}
+};
 
 export type TraceContext = {
   traceId: string;
   spanId: string;
   parentSpanId?: string;
-}
+};
 
 export enum HeaderFilterLevel {
   HIGH = 0,
