@@ -1,0 +1,135 @@
+import { subscribeToHttp } from "../lib/instrumentation/http-subscriber";
+import { subscribeToUndici } from "../lib/instrumentation/undici-subscriber";
+import { CaptureBodyOptions, FilterHeaderOptions, Service } from "./client.types";
+
+class MyceliumBuilder {
+    private serviceValue: Service = { key: '', name: '', origin: '' };
+    private apiKeyValue: string = '';
+    private subscribeToFetchValue: boolean = false;
+    private subscribeToHttpValue: boolean = false;
+    private captureStreamBodiesValue: boolean = false;
+    private captureBodyOptionsValue: CaptureBodyOptions = {};
+    private filterHeaderOptionsValue: FilterHeaderOptions = {};
+
+    defineService(service: Service): this {
+        this.serviceValue = service;
+        return this;
+    }
+
+    apiKey(apiKey: string): this {
+        this.apiKeyValue = apiKey;
+        return this;
+    }
+
+    subscribeToFetch(): this {
+        this.subscribeToFetchValue = true;
+        return this;
+    }
+
+    subscribeToHttp(): this {
+        this.subscribeToHttpValue = true;
+        return this;
+    }
+
+    captureBody(captureBodyOptions: CaptureBodyOptions){
+        this.captureBodyOptionsValue = captureBodyOptions;
+        return this
+    }
+
+    captureStreamBodies(): this {
+        this.captureStreamBodiesValue = true;
+        return this;
+    }
+
+    filterHeader(filterHeaderOptions: FilterHeaderOptions): this {
+        this.filterHeaderOptionsValue = filterHeaderOptions;
+        return this;
+    }
+
+    initialize(){
+        return new MyceliumClient(
+            this.serviceValue,
+            this.apiKeyValue,
+            this.subscribeToFetchValue,
+            this.subscribeToHttpValue,
+            this.captureStreamBodiesValue,
+            this.captureBodyOptionsValue,
+            this.filterHeaderOptionsValue
+        );
+    }
+}
+
+class MyceliumClient {
+    private serviceValue: Service;
+    private apiKeyValue: string = '';
+    private subscribeToFetchValue: boolean = false;
+    private subscribeToHttpValue: boolean = false;
+    private captureStreamBodiesValue: boolean = false;
+    private captureBodyOptionsValue: CaptureBodyOptions = {};
+    private initialized: boolean = false;
+    private filterHeaderOptionsValue: FilterHeaderOptions = {};
+
+    constructor(
+        serviceValue: Service,
+        apiKeyValue: string = '',
+        subscribeToFetchValue: boolean = false,
+        subscribeToHttpValue: boolean = false,
+        captureStreamBodiesValue: boolean = false,
+        captureBodyOptionsValue: CaptureBodyOptions = {},
+        filterHeaderOptionsValue: FilterHeaderOptions = {}
+    ) {
+        this.serviceValue = serviceValue;
+        this.apiKeyValue = apiKeyValue;
+        this.captureStreamBodiesValue = captureStreamBodiesValue;
+        this.captureBodyOptionsValue = captureBodyOptionsValue;
+        this.subscribeToFetchValue = subscribeToFetchValue;
+        this.subscribeToHttpValue = subscribeToHttpValue;
+        this.filterHeaderOptionsValue = filterHeaderOptionsValue;
+        
+        this.initialize();
+    }
+
+    initialize() {
+        this.assertReady();
+
+        if(this.subscribeToFetchValue) {
+            subscribeToUndici({
+                bodyMaxBytes: this.captureBodyOptionsValue.maxBytes,
+                captureStreamBodies: this.captureStreamBodiesValue,
+                headerFilterLevel: this.filterHeaderOptionsValue.level,
+                service: this.serviceValue
+            });
+        }
+        if(this.subscribeToHttpValue) {
+            subscribeToHttp({
+                bodyMaxBytes: this.captureBodyOptionsValue.maxBytes,
+                captureStreamBodies: this.captureStreamBodiesValue,
+                headerFilterLevel: this.filterHeaderOptionsValue.level,
+                service: this.serviceValue
+            });
+        }
+
+        this.initialized = true;
+    }
+
+    private assertReady(): void {
+        if (!this.apiKeyValue) {
+            throw new Error('Mycelium client requires an api key before initialize().');
+        }
+        if (!this.serviceValue.key) {
+            throw new Error('Mycelium client requires service.key before initialize().');
+        }
+        if (!this.serviceValue.origin) {
+            throw new Error(
+                'Mycelium client requires service.origin before initialize().',
+            );
+        }
+    }
+
+    isInitialized(): boolean {
+        return this.initialized;
+    }
+
+}
+
+export const createClient = () => new MyceliumBuilder();
