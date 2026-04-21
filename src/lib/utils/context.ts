@@ -4,8 +4,6 @@ import { newSpanUUID, newTraceUUID } from './generate-uuid';
 
 export const traceStore = new AsyncLocalStorage<TraceContext>();
 
-export const getTraceContext = () => traceStore.getStore();
-
 export const childContext = (): TraceContext => {
   const parent = traceStore.getStore();
   return {

@@ -11,7 +11,8 @@
     "start": "node dist/index.js",
     "build": "tsc",
     "format": "prettier . --write",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "knip": "knip"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,8 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/node": "^24.12.2",
+    "knip": "^6.6.0",
     "prettier": "^3.8.3",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   }
 }
