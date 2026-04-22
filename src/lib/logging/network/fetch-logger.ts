@@ -1,9 +1,8 @@
-import { Service } from '../../../setup/client.types';
-import { BODY_MAX_BYTES, LOG_ENDPOINT } from '../../constants';
-import { HeaderFilterLevel, TraceContext } from '../../types';
-import { buildMarkedUndiciRequest } from '../../utils/build-marked-undici-request';
-import { injectTraceHeaders } from '../../utils/inject-trace';
-import { prepareBody } from '../../utils/prepare-body';
+import { Service } from '@/setup/client.types';
+import { BODY_MAX_BYTES, LOG_ENDPOINT } from '@/lib/constants';
+import { HeaderFilterLevel, TraceContext } from '@/lib/types';
+import { buildMarkedUndiciRequest } from '@/lib/utils/build-marked-undici-request';
+import { prepareBody } from '@/lib/utils/prepare-body';
 
 export class FetchLogger {
   private readonly logEndpoint: string = LOG_ENDPOINT;
@@ -25,7 +24,6 @@ export class FetchLogger {
   }
 
   async log(request: any, ctx: TraceContext): Promise<void> {
-    injectTraceHeaders(request, ctx);
     const preparedBody = prepareBody(request, this.captureStreamBodies);
     const markedRequest = await buildMarkedUndiciRequest(
       request,

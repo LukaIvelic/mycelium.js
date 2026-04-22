@@ -1,5 +1,5 @@
-import { computeBodySize } from './compute-body-size';
-import { serializeBody } from './serialize-body';
+import { computeBodySize } from '@/lib/utils/compute-body-size';
+import { serializeBody } from '@/lib/utils/serialize-body';
 
 export async function serializeAndTruncate(
   preparedBody: unknown,

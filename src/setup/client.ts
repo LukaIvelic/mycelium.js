@@ -1,6 +1,6 @@
-import { subscribeToHttp } from '../lib/instrumentation/http-subscriber';
-import { subscribeToUndici } from '../lib/instrumentation/undici-subscriber';
+import { subscribeToHttp } from '@/lib/instrumentation/http-subscriber';
 import { CaptureBodyOptions, FilterHeaderOptions, Service } from './client.types';
+import { subscribeToUndici } from '@/lib/instrumentation/undici-subscriber';
 
 class MyceliumBuilder {
   private serviceValue: Service = { key: '', name: '', origin: '' };

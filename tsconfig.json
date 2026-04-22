@@ -20,7 +20,11 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "ignoreDeprecations": "6.0",
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "exclude": ["test.ts", "**/*.test.ts", "**/*.spec.ts", "dist"]
 }

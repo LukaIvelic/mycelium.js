@@ -1,4 +1,4 @@
-import { HeaderFilterLevel } from '../lib/types';
+import { HeaderFilterLevel } from '@/lib/types';
 
 export type Service = {
   key: string;

@@ -1,4 +1,4 @@
-import { teeBody } from './tee-body';
+import { teeBody } from '@/lib/utils/tee-body';
 
 export function prepareBody(request: any, captureStreamBodies: boolean): unknown {
   if (!captureStreamBodies) return request.body;

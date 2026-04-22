@@ -1,9 +1,3 @@
-export enum DiagnosticsChannel {
-  UndiciRequestCreate = 'undici:request:create',
-  HttpClientRequestStart = 'http.client.request.start',
-  HttpServerRequestStart = 'http.server.request.start',
-}
-
 export type UndiciRequest = {
   method: string;
   statusCode: number;
@@ -39,16 +33,9 @@ export type TraceContext = {
   parentSpanId?: string;
 };
 
-export enum HeaderFilterLevel {
-  HIGH = 0,
-  MEDIUM = 1,
-  METADATA = 2,
-  ALL = 3,
-}
-
-export enum BodyBytes {
-  ZERO = 0,
-  ONE_KB = 1024,
-  TWO_KB = 2048,
-  FIVE_KB = 5120,
-}
+export type InflightRequest = {
+  startedAt: number;
+  statusCode?: number;
+  body?: unknown;
+  ctx: TraceContext;
+};

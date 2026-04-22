@@ -1,6 +1,6 @@
-import { HeaderFilterLevel } from '../types';
-import { filterHeaders } from './filter-header';
-import { parseRawHeaders } from './parse-raw-headers';
+import { HeaderFilterLevel } from '@/lib/types';
+import { filterHeaders } from '@/lib/utils/filter-header';
+import { parseRawHeaders } from '@/lib/utils/parse-raw-headers';
 
 export function safeHeaders(
   raw: string[],

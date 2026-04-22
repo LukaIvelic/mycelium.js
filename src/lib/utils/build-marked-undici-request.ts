@@ -1,7 +1,7 @@
-import { Service } from '../../setup/client.types';
-import { HeaderFilterLevel, MarkedUndiciRequest, TraceContext } from '../types';
-import { safeHeaders } from './safe-headers';
-import { serializeAndTruncate } from './serialize-and-truncate';
+import { Service } from '@/setup/client.types';
+import { HeaderFilterLevel, MarkedUndiciRequest, TraceContext } from '@/lib/types';
+import { safeHeaders } from '@/lib/utils/safe-headers';
+import { serializeAndTruncate } from '@/lib/utils/serialize-and-truncate';
 
 export async function buildMarkedUndiciRequest(
   request: any,
@@ -39,7 +39,7 @@ export async function buildMarkedUndiciRequest(
     spanId: ctx.spanId,
     parentSpanId: ctx.parentSpanId,
     timestamp: timestamp,
-    durationMs: 0, //calculate duration based on request start and end time
+    durationMs: request.durationMs,
     serviceName: service.name,
     serviceKey: service.key,
     serviceOrigin: service.origin,

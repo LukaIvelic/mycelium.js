@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { TraceContext } from '../types';
-import { newSpanUUID, newTraceUUID } from './generate-uuid';
+import { TraceContext } from '@/lib/types';
+import { newSpanUUID, newTraceUUID } from '@/lib/utils/generate-uuid';
 
 export const traceStore = new AsyncLocalStorage<TraceContext>();
 

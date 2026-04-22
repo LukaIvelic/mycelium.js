@@ -1,10 +1,10 @@
 import diagnosticsChannel from 'node:diagnostics_channel';
-import { DiagnosticsChannel, HeaderFilterLevel, TraceContext } from '../types';
-import { HttpLogger } from '../logging/network/http-logger';
-import { Service } from '../../setup/client.types';
-import { flattenHeaders } from '../utils/flatten-headers';
-import { childContext, traceStore } from '../utils/context';
-import { newSpanUUID, newTraceUUID } from '../utils/generate-uuid';
+import { HttpLogger } from '@/lib/logging/network/http-logger';
+import { flattenHeaders } from '@/lib/utils/flatten-headers';
+import { childContext, traceStore } from '@/lib/utils/context';
+import { newSpanUUID, newTraceUUID } from '@/lib/utils/generate-uuid';
+import { DiagnosticsChannel, HeaderFilterLevel, TraceContext } from '@/lib/types';
+import { Service } from '@/setup/client.types';
 
 interface HttpSubscriberConfig {
   service: Service;

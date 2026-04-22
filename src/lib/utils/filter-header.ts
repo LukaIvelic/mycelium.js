@@ -1,4 +1,4 @@
-import { HeaderFilterLevel } from '../types';
+import { HeaderFilterLevel } from '@/lib/types';
 
 const HIGH_RISK_BLOATERS = new Set([
   'cookie',
