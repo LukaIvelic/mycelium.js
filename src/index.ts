@@ -1,2 +1,2 @@
-export { createClient } from './setup/client';
-export { HeaderFilterLevel, BodyBytes } from './lib/types';
+export { createClient } from '@/setup/client';
+export { HeaderFilterLevel, BodyBytes } from '@/lib/types';

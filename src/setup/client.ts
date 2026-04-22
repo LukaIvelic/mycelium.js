@@ -1,5 +1,5 @@
 import { subscribeToHttp } from '@/lib/instrumentation/http-subscriber';
-import { CaptureBodyOptions, FilterHeaderOptions, Service } from './client.types';
+import { CaptureBodyOptions, FilterHeaderOptions, Service } from '@/setup/client.types';
 import { subscribeToUndici } from '@/lib/instrumentation/undici-subscriber';
 
 class MyceliumBuilder {
