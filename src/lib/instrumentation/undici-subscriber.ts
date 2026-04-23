@@ -4,14 +4,16 @@ import { InflightRequest, DiagnosticsChannel, HeaderFilterLevel } from '@/lib/ty
 import { FetchLogger } from '@/lib/logging/network/fetch-logger';
 import { Service } from '@/setup/client.types';
 import { childContext } from '@/lib/utils/context';
-import { injectTraceHeaders } from '@/lib/utils/inject-trace';
+import { injectTraceHeaders } from '@/lib/utils/inject';
 import { prepareBody } from '@/lib/utils/prepare-body';
+import { isLogEndpoint } from '@/lib/utils/is-internal-origin';
 
 interface UndiciSubscriberConfig {
   service: Service;
   bodyMaxBytes?: number;
   captureStreamBodies: boolean;
   headerFilterLevel?: HeaderFilterLevel;
+  apiKey: string;
 }
 
 export function subscribeToUndici(config: UndiciSubscriberConfig) {
@@ -20,6 +22,7 @@ export function subscribeToUndici(config: UndiciSubscriberConfig) {
     config.captureStreamBodies,
     config.headerFilterLevel,
     config.service,
+    config.apiKey,
   );
 
   const inflightRequests = new WeakMap<object, InflightRequest>();
@@ -41,6 +44,8 @@ export function subscribeToUndici(config: UndiciSubscriberConfig) {
   };
 
   diagnosticsChannel.subscribe(DiagnosticsChannel.UndiciRequestCreate, (message: any) => {
+    if (isLogEndpoint(message.request?.origin ?? '', message.request?.path ?? '')) return;
+
     const ctx = childContext();
     const preparedBody = prepareBody(message.request, config.captureStreamBodies);
 
@@ -54,8 +59,10 @@ export function subscribeToUndici(config: UndiciSubscriberConfig) {
   });
 
   diagnosticsChannel.subscribe(DiagnosticsChannel.UndiciRequestHeaders, (message: any) => {
+    const existing = inflightRequests.get(message.request);
+    if (!existing) return;
     inflightRequests.set(message.request, {
-      ...(inflightRequests.get(message.request) as InflightRequest),
+      ...existing,
       statusCode: Number(message.response.statusCode) || 0,
     });
   });

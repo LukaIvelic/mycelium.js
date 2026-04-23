@@ -99,6 +99,7 @@ class MyceliumClient {
         captureStreamBodies: this.captureStreamBodiesValue,
         headerFilterLevel: this.filterHeaderOptionsValue.level,
         service: this.serviceValue,
+        apiKey: this.apiKeyValue,
       });
     }
     if (this.subscribeToHttpValue) {
@@ -107,6 +108,7 @@ class MyceliumClient {
         captureStreamBodies: this.captureStreamBodiesValue,
         headerFilterLevel: this.filterHeaderOptionsValue.level,
         service: this.serviceValue,
+        apiKey: this.apiKeyValue,
       });
     }
 

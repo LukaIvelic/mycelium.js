@@ -2,14 +2,14 @@ export type UndiciRequest = {
   method: string;
   statusCode: number;
   body: unknown;
-  complete: boolean;
+  completed: boolean;
   aborted: boolean;
   path: string;
   origin: string;
   protocol: string;
   idempotent: boolean;
-  contentLength: number;
-  contentType: string;
+  contentLength: number | null;
+  contentType: string | null;
   headers: Record<string, string>;
 };
 
@@ -17,7 +17,7 @@ export type MarkedUndiciRequest = UndiciRequest & {
   traceId: string;
   spanId: string;
   parentSpanId?: string;
-  bodySizeKb: number;
+  bodySizeKB: number;
   timestamp: string;
   durationMs: number;
   serviceKey: string;

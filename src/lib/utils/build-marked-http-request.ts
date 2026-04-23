@@ -3,7 +3,9 @@ import { HeaderFilterLevel, MarkedUndiciRequest, TraceContext } from '@/lib/type
 import { safeHeaders } from '@/lib/utils/safe-headers';
 import { serializeAndTruncate } from '@/lib/utils/serialize-and-truncate';
 
-export async function buildMarkedUndiciRequest(
+const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'TRACE']);
+
+export async function buildMarkedHttpRequest(
   request: any,
   preparedBody: unknown,
   bodyMaxBytes: number,
@@ -12,7 +14,7 @@ export async function buildMarkedUndiciRequest(
   service: Service,
   ctx: TraceContext,
 ): Promise<MarkedUndiciRequest> {
-  const headers = safeHeaders(request.headers, headerFilterLevel);
+  const headers = safeHeaders(request.rawHeaders ?? [], headerFilterLevel);
   const { body, bodySize } = await serializeAndTruncate(
     preparedBody,
     bodyMaxBytes,
@@ -20,26 +22,30 @@ export async function buildMarkedUndiciRequest(
   );
   const bodySizeKb = bodySize / 1024;
   const timestamp = new Date().toISOString();
+  const method: string = request.method ?? '';
+  const protocol = request.protocol ?? (request._encrypted ? 'https' : 'http');
+  const host: string = request.host ?? request.hostname ?? '';
+  const origin = `${protocol}://${host}`;
 
   return {
-    method: request.method,
-    statusCode: request.statusCode,
-    body: body,
+    method,
+    statusCode: request.statusCode ?? 0,
+    body,
     bodySizeKB: bodySizeKb,
-    completed: Boolean(request.complete),
-    aborted: request.aborted,
-    path: request.path,
-    origin: request.origin,
-    protocol: request.protocol,
-    idempotent: request.idempotent,
-    contentLength: request.contentLength,
-    contentType: request.contentType,
-    headers: headers,
+    completed: !request.destroyed,
+    aborted: request.destroyed ?? false,
+    path: request.path ?? '/',
+    origin,
+    protocol,
+    idempotent: IDEMPOTENT_METHODS.has(method.toUpperCase()),
+    contentLength: Number(headers['content-length']) || null,
+    contentType: headers['content-type'] ?? null,
+    headers,
     traceId: ctx.traceId,
     spanId: ctx.spanId,
     parentSpanId: ctx.parentSpanId,
-    timestamp: timestamp,
-    durationMs: Math.round(request.durationMs),
+    timestamp,
+    durationMs: Math.round(request.durationMs ?? 0),
     serviceName: service.name,
     serviceKey: service.key,
     serviceOrigin: service.origin,

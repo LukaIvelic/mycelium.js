@@ -4,15 +4,17 @@ import { InflightRequest, DiagnosticsChannel, HeaderFilterLevel, TraceContext } 
 import { HttpLogger } from '@/lib/logging/network/http-logger';
 import { Service } from '@/setup/client.types';
 import { childContext, traceStore } from '@/lib/utils/context';
-import { injectTraceHeaders } from '@/lib/utils/inject-trace';
+import { injectTraceHeaders } from '@/lib/utils/inject';
 import { prepareBody } from '@/lib/utils/prepare-body';
 import { newSpanUUID, newTraceUUID } from '../utils/generate-uuid';
+import { isLogEndpoint } from '@/lib/utils/is-internal-origin';
 
 interface HttpSubscriberConfig {
   service: Service;
   bodyMaxBytes?: number;
   captureStreamBodies: boolean;
   headerFilterLevel?: HeaderFilterLevel;
+  apiKey: string;
 }
 
 export function subscribeToHttp(config: HttpSubscriberConfig) {
@@ -21,6 +23,7 @@ export function subscribeToHttp(config: HttpSubscriberConfig) {
     config.captureStreamBodies,
     config.headerFilterLevel,
     config.service,
+    config.apiKey,
   );
 
   const inflightRequests = new WeakMap<object, InflightRequest>();
@@ -60,6 +63,8 @@ export function subscribeToHttp(config: HttpSubscriberConfig) {
   };
 
   diagnosticsChannel.subscribe(DiagnosticsChannel.HttpClientRequestStart, (message: any) => {
+    if (isLogEndpoint(message.request?.host ?? '', message.request?.path ?? '')) return;
+
     const ctx = childContext();
     const preparedBody = prepareBody(message.request, config.captureStreamBodies);
 
@@ -73,8 +78,10 @@ export function subscribeToHttp(config: HttpSubscriberConfig) {
   });
 
   diagnosticsChannel.subscribe(DiagnosticsChannel.HttpClientResponseFinish, (message: any) => {
+    const existing = inflightRequests.get(message.request);
+    if (!existing) return;
     inflightRequests.set(message.request, {
-      ...(inflightRequests.get(message.request) as InflightRequest),
+      ...existing,
       statusCode: Number(message.response.statusCode) || 0,
     });
   });
