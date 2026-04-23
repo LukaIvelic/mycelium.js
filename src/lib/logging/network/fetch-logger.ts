@@ -2,6 +2,7 @@ import { Service } from '@/setup/client.types';
 import { BODY_MAX_BYTES, LOG_ENDPOINT } from '@/lib/constants';
 import { HeaderFilterLevel, TraceContext } from '@/lib/types';
 import { buildMarkedUndiciRequest } from '@/lib/utils/build-marked-undici-request';
+import { ensureServiceRegistered } from '@/lib/utils/ensure-service-registered';
 import { prepareBody } from '@/lib/utils/prepare-body';
 
 export class FetchLogger {
@@ -37,6 +38,12 @@ export class FetchLogger {
       this.service,
       ctx,
     );
+
+    try {
+      await ensureServiceRegistered(this.service, this.apiKey);
+    } catch (err) {
+      // swallow registration errors to avoid disrupting the main application flow
+    }
 
     try {
       await fetch(this.logEndpoint, {

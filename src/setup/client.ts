@@ -2,6 +2,7 @@ import { subscribeToHttp } from '@/lib/instrumentation/http-subscriber';
 import { CaptureBodyOptions, FilterHeaderOptions, Service } from '@/setup/client.types';
 import { subscribeToUndici } from '@/lib/instrumentation/undici-subscriber';
 import { AssertReadyMessages } from '@/lib/constants';
+import { ensureServiceRegistered } from '@/lib/utils/ensure-service-registered';
 
 class MyceliumBuilder {
   private serviceValue: Service = { key: '', name: '', origin: '' };
@@ -92,6 +93,9 @@ class MyceliumClient {
 
   initialize() {
     this.assertReady();
+    void ensureServiceRegistered(this.serviceValue, this.apiKeyValue).catch(
+      () => undefined,
+    );
 
     if (this.subscribeToFetchValue) {
       subscribeToUndici({

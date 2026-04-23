@@ -1,7 +1,9 @@
 import { BodyBytes } from '@/lib/types';
 
-//export const LOG_ENDPOINT = 'https://www.myceliums.dev/api/logs';
-export const LOG_ENDPOINT = 'http://localhost:8000/api/logs';
+//export const API_ENDPOINT = 'https://www.myceliums.dev/api';
+export const API_ENDPOINT = 'http://localhost:8000/api';
+export const LOG_ENDPOINT = `${API_ENDPOINT}/logs`;
+export const SERVICE_REGISTER_ENDPOINT = `${API_ENDPOINT}/services/register`;
 export const BODY_MAX_BYTES = BodyBytes.FIVE_KB;
 
 export const AssertReadyMessages = {

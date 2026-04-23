@@ -23,8 +23,10 @@ export async function buildMarkedHttpRequest(
   const bodySizeKb = bodySize / 1024;
   const timestamp = new Date().toISOString();
   const method: string = request.method ?? '';
-  const protocol = request.protocol ?? (request._encrypted ? 'https' : 'http');
-  const host: string = request.host ?? request.hostname ?? '';
+  const protocol = String(
+    request.protocol ?? (request._encrypted ? 'https' : 'http'),
+  ).replace(/:$/, '');
+  const host: string = request.host ?? request.hostname ?? headers.host ?? '';
   const origin = `${protocol}://${host}`;
 
   return {
