@@ -1,6 +1,7 @@
 import { subscribeToHttp } from '@/lib/instrumentation/http-subscriber';
 import { CaptureBodyOptions, FilterHeaderOptions, Service } from '@/setup/client.types';
 import { subscribeToUndici } from '@/lib/instrumentation/undici-subscriber';
+import { AssertReadyMessages } from '@/lib/constants';
 
 class MyceliumBuilder {
   private serviceValue: Service = { key: '', name: '', origin: '' };
@@ -114,13 +115,13 @@ class MyceliumClient {
 
   private assertReady(): void {
     if (!this.apiKeyValue) {
-      throw new Error('Mycelium client requires an api key before initialize().');
+      throw new Error(AssertReadyMessages.API_KEY);
     }
     if (!this.serviceValue.key) {
-      throw new Error('Mycelium client requires service.key before initialize().');
+      throw new Error(AssertReadyMessages.SERVICE_KEY);
     }
     if (!this.serviceValue.origin) {
-      throw new Error('Mycelium client requires service.origin before initialize().');
+      throw new Error(AssertReadyMessages.SERVICE_ORIGIN);
     }
   }
 
