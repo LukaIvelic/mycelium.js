@@ -93,9 +93,7 @@ class MyceliumClient {
 
   initialize() {
     this.assertReady();
-    void ensureServiceRegistered(this.serviceValue, this.apiKeyValue).catch(
-      () => undefined,
-    );
+    void ensureServiceRegistered(this.serviceValue, this.apiKeyValue).catch(() => undefined);
 
     if (this.subscribeToFetchValue) {
       subscribeToUndici({

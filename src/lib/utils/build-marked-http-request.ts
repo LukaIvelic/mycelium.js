@@ -23,9 +23,10 @@ export async function buildMarkedHttpRequest(
   const bodySizeKb = bodySize / 1024;
   const timestamp = new Date().toISOString();
   const method: string = request.method ?? '';
-  const protocol = String(
-    request.protocol ?? (request._encrypted ? 'https' : 'http'),
-  ).replace(/:$/, '');
+  const protocol = String(request.protocol ?? (request._encrypted ? 'https' : 'http')).replace(
+    /:$/,
+    '',
+  );
   const host: string = request.host ?? request.hostname ?? headers.host ?? '';
   const origin = `${protocol}://${host}`;
 
@@ -53,5 +54,6 @@ export async function buildMarkedHttpRequest(
     serviceOrigin: service.origin,
     serviceVersion: service.version,
     serviceDescription: service.description,
+    serviceRepository: service.repository,
   };
 }

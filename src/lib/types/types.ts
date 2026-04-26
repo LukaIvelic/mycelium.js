@@ -25,6 +25,7 @@ export type MarkedUndiciRequest = UndiciRequest & {
   serviceOrigin: string;
   serviceVersion?: string;
   serviceDescription?: string;
+  serviceRepository?: string;
 };
 
 export type TraceContext = {

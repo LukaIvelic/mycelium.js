@@ -45,5 +45,6 @@ export async function buildMarkedUndiciRequest(
     serviceOrigin: service.origin,
     serviceVersion: service.version,
     serviceDescription: service.description,
+    serviceRepository: service.repository,
   };
 }

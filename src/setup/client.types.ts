@@ -6,6 +6,7 @@ export type Service = {
   name: string;
   version?: string;
   description?: string;
+  repository?: string;
 };
 
 export type CaptureBodyOptions = {

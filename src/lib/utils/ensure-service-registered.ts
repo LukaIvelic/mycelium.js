@@ -3,10 +3,7 @@ import { Service } from '@/setup/client.types';
 
 const registrationRequests = new Map<string, Promise<void>>();
 
-export function ensureServiceRegistered(
-  service: Service,
-  apiKey: string,
-): Promise<void> {
+export function ensureServiceRegistered(service: Service, apiKey: string): Promise<void> {
   const cacheKey = `${apiKey}:${service.origin}`;
   const existingRequest = registrationRequests.get(cacheKey);
   if (existingRequest) return existingRequest;
@@ -23,6 +20,7 @@ export function ensureServiceRegistered(
       serviceName: service.name,
       serviceVersion: service.version,
       serviceDescription: service.description,
+      serviceRepository: service.repository,
     }),
   })
     .then((response) => {
