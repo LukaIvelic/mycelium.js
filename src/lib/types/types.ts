@@ -20,12 +20,12 @@ export type MarkedUndiciRequest = UndiciRequest & {
   bodySizeKB: number;
   timestamp: string;
   durationMs: number;
-  serviceKey: string;
-  serviceName: string;
-  serviceOrigin: string;
-  serviceVersion?: string;
-  serviceDescription?: string;
-  serviceRepository?: string;
+  integrationKey: string;
+  integrationName: string;
+  integrationOrigin: string;
+  integrationVersion?: string;
+  integrationDescription?: string;
+  integrationRepository?: string;
 };
 
 export type TraceContext = {

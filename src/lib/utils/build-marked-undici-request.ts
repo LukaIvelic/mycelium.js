@@ -1,7 +1,11 @@
-import { Service } from '@/setup/client.types';
-import { HeaderFilterLevel, MarkedUndiciRequest, TraceContext } from '@/lib/types';
+import {
+  HeaderFilterLevel,
+  MarkedUndiciRequest,
+  TraceContext,
+} from '@/lib/types';
 import { safeHeaders } from '@/lib/utils/safe-headers';
 import { serializeAndTruncate } from '@/lib/utils/serialize-and-truncate';
+import { Service } from '@/setup/client.types';
 
 export async function buildMarkedUndiciRequest(
   request: any,
@@ -40,11 +44,11 @@ export async function buildMarkedUndiciRequest(
     parentSpanId: ctx.parentSpanId,
     timestamp: timestamp,
     durationMs: Math.round(request.durationMs),
-    serviceName: service.name,
-    serviceKey: service.key,
-    serviceOrigin: service.origin,
-    serviceVersion: service.version,
-    serviceDescription: service.description,
-    serviceRepository: service.repository,
+    integrationName: service.name,
+    integrationKey: service.key,
+    integrationOrigin: service.origin,
+    integrationVersion: service.version,
+    integrationDescription: service.description,
+    integrationRepository: service.repository,
   };
 }

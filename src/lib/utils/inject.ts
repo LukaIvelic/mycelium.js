@@ -14,5 +14,6 @@ const setHeader = (request: any, key: string, value: string) => {
 export function injectTraceHeaders(request: any, ctx: TraceContext): void {
   setHeader(request, 'x-trace-id', ctx.traceId);
   setHeader(request, 'x-span-id', ctx.spanId);
-  if (ctx.parentSpanId) setHeader(request, 'x-parent-span-id', ctx.parentSpanId);
+  if (ctx.parentSpanId)
+    setHeader(request, 'x-parent-span-id', ctx.parentSpanId);
 }

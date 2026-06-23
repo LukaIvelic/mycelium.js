@@ -1,9 +1,20 @@
-import { Service } from '@/setup/client.types';
-import { HeaderFilterLevel, MarkedUndiciRequest, TraceContext } from '@/lib/types';
+import {
+  HeaderFilterLevel,
+  MarkedUndiciRequest,
+  TraceContext,
+} from '@/lib/types';
 import { safeHeaders } from '@/lib/utils/safe-headers';
 import { serializeAndTruncate } from '@/lib/utils/serialize-and-truncate';
+import { Service } from '@/setup/client.types';
 
-const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'PUT', 'DELETE', 'OPTIONS', 'TRACE']);
+const IDEMPOTENT_METHODS = new Set([
+  'GET',
+  'HEAD',
+  'PUT',
+  'DELETE',
+  'OPTIONS',
+  'TRACE',
+]);
 
 export async function buildMarkedHttpRequest(
   request: any,
@@ -23,10 +34,9 @@ export async function buildMarkedHttpRequest(
   const bodySizeKb = bodySize / 1024;
   const timestamp = new Date().toISOString();
   const method: string = request.method ?? '';
-  const protocol = String(request.protocol ?? (request._encrypted ? 'https' : 'http')).replace(
-    /:$/,
-    '',
-  );
+  const protocol = String(
+    request.protocol ?? (request._encrypted ? 'https' : 'http'),
+  ).replace(/:$/, '');
   const host: string = request.host ?? request.hostname ?? headers.host ?? '';
   const origin = `${protocol}://${host}`;
 
@@ -49,11 +59,11 @@ export async function buildMarkedHttpRequest(
     parentSpanId: ctx.parentSpanId,
     timestamp,
     durationMs: Math.round(request.durationMs ?? 0),
-    serviceName: service.name,
-    serviceKey: service.key,
-    serviceOrigin: service.origin,
-    serviceVersion: service.version,
-    serviceDescription: service.description,
-    serviceRepository: service.repository,
+    integrationName: service.name,
+    integrationKey: service.key,
+    integrationOrigin: service.origin,
+    integrationVersion: service.version,
+    integrationDescription: service.description,
+    integrationRepository: service.repository,
   };
 }

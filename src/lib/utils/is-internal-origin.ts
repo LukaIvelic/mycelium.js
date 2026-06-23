@@ -1,4 +1,4 @@
-import { LOG_ENDPOINT, SERVICE_REGISTER_ENDPOINT } from '../constants';
+import { LOG_ENDPOINT } from '../constants';
 
 export function isLogEndpoint(origin: string, path: string): boolean {
   const value = `${origin}${path}`;
@@ -9,9 +9,5 @@ export function isLogEndpoint(origin: string, path: string): boolean {
     candidates.push(`https://${value}`);
   }
 
-  return candidates.some(
-    (candidate) =>
-      candidate.startsWith(LOG_ENDPOINT) ||
-      candidate.startsWith(SERVICE_REGISTER_ENDPOINT),
-  );
+  return candidates.some((candidate) => candidate.startsWith(LOG_ENDPOINT));
 }

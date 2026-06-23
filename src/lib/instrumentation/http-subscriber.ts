@@ -1,13 +1,18 @@
 import diagnosticsChannel from 'node:diagnostics_channel';
 import { performance } from 'node:perf_hooks';
-import { InflightRequest, DiagnosticsChannel, HeaderFilterLevel, TraceContext } from '@/lib/types';
 import { HttpLogger } from '@/lib/logging/network/http-logger';
-import { Service } from '@/setup/client.types';
+import {
+  DiagnosticsChannel,
+  HeaderFilterLevel,
+  InflightRequest,
+  TraceContext,
+} from '@/lib/types';
 import { childContext, traceStore } from '@/lib/utils/context';
 import { injectTraceHeaders } from '@/lib/utils/inject';
-import { prepareBody } from '@/lib/utils/prepare-body';
-import { newSpanUUID, newTraceUUID } from '../utils/generate-uuid';
 import { isLogEndpoint } from '@/lib/utils/is-internal-origin';
+import { prepareBody } from '@/lib/utils/prepare-body';
+import { Service } from '@/setup/client.types';
+import { newSpanUUID, newTraceUUID } from '../utils/generate-uuid';
 
 interface HttpSubscriberConfig {
   service: Service;
@@ -62,61 +67,98 @@ export function subscribeToHttp(config: HttpSubscriberConfig) {
     inflightServerRequests.delete(message.request);
   };
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.HttpClientRequestStart, (message: any) => {
-    if (isLogEndpoint(message.request?.host ?? '', message.request?.path ?? '')) return;
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.HttpClientRequestStart,
+    (message: any) => {
+      if (
+        isLogEndpoint(message.request?.host ?? '', message.request?.path ?? '')
+      )
+        return;
+      if (String(message.request?.method ?? '').toUpperCase() === 'OPTIONS')
+        return;
 
-    const ctx = childContext();
-    const preparedBody = prepareBody(message.request, config.captureStreamBodies);
+      const ctx = childContext();
+      const preparedBody = prepareBody(
+        message.request,
+        config.captureStreamBodies,
+      );
 
-    injectTraceHeaders(message.request, ctx);
+      injectTraceHeaders(message.request, ctx);
 
-    inflightRequests.set(message.request, {
-      startedAt: performance.now(),
-      body: preparedBody,
-      ctx,
-    });
-  });
+      inflightRequests.set(message.request, {
+        startedAt: performance.now(),
+        body: preparedBody,
+        ctx,
+      });
+    },
+  );
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.HttpClientResponseFinish, (message: any) => {
-    const existing = inflightRequests.get(message.request);
-    if (!existing) return;
-    inflightRequests.set(message.request, {
-      ...existing,
-      statusCode: Number(message.response.statusCode) || 0,
-    });
-  });
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.HttpClientResponseFinish,
+    (message: any) => {
+      const existing = inflightRequests.get(message.request);
+      if (!existing) return;
+      inflightRequests.set(message.request, {
+        ...existing,
+        statusCode: Number(message.response.statusCode) || 0,
+      });
+    },
+  );
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.HttpClientResponseFinish, finalize);
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.HttpClientResponseFinish,
+    finalize,
+  );
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.HttpClientRequestError, finalize);
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.HttpClientRequestError,
+    finalize,
+  );
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.HttpServerRequestStart, (message: any) => {
-    const request = message.request;
-    const headers = request.headers;
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.HttpServerRequestStart,
+    (message: any) => {
+      const request = message.request;
+      const headers = request.headers;
+      const host = request.host ?? request.headers?.host ?? '';
+      const path = request.path ?? request.url ?? '';
 
-    const ctx: TraceContext = {
-      traceId: (headers['x-trace-id'] as string) ?? newTraceUUID(),
-      spanId: newSpanUUID(),
-      parentSpanId: headers['x-span-id'] as string | undefined,
-    };
+      if (isLogEndpoint(host, path)) return;
+      if (String(request.method ?? '').toUpperCase() === 'OPTIONS') return;
 
-    traceStore.enterWith(ctx);
+      const ctx: TraceContext = {
+        traceId: (headers['x-trace-id'] as string) ?? newTraceUUID(),
+        spanId: newSpanUUID(),
+        parentSpanId: headers['x-span-id'] as string | undefined,
+      };
 
-    const preparedBody = prepareBody(request, config.captureStreamBodies);
+      traceStore.enterWith(ctx);
 
-    inflightServerRequests.set(request, {
-      startedAt: performance.now(),
-      body: preparedBody,
-      ctx,
-    });
-  });
+      const preparedBody = prepareBody(request, config.captureStreamBodies);
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.HttpServerResponseFinish, (message: any) => {
-    inflightServerRequests.set(message.request, {
-      ...(inflightServerRequests.get(message.request) as InflightRequest),
-      statusCode: Number(message.response.statusCode) || 0,
-    });
-  });
+      inflightServerRequests.set(request, {
+        startedAt: performance.now(),
+        body: preparedBody,
+        ctx,
+      });
+    },
+  );
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.HttpServerResponseFinish, finalizeServer);
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.HttpServerResponseFinish,
+    (message: any) => {
+      const existing = inflightServerRequests.get(message.request);
+      if (!existing) return;
+
+      inflightServerRequests.set(message.request, {
+        ...existing,
+        statusCode: Number(message.response.statusCode) || 0,
+      });
+    },
+  );
+
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.HttpServerResponseFinish,
+    finalizeServer,
+  );
 }

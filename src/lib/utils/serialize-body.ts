@@ -1,5 +1,3 @@
-import { Readable } from 'node:stream';
-
 export async function serializeBody(
   body: unknown,
   captureStreamBodies = false,
@@ -15,7 +13,9 @@ export async function serializeBody(
   if (Array.isArray(body)) {
     try {
       return Buffer.concat(
-        body.map((chunk) => (Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))),
+        body.map((chunk) =>
+          Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk),
+        ),
       ).toString('utf8');
     } catch {
       return '[unserializable array body]';

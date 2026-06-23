@@ -1,9 +1,8 @@
-import { Service } from '@/setup/client.types';
 import { BODY_MAX_BYTES, LOG_ENDPOINT } from '@/lib/constants';
 import { HeaderFilterLevel, TraceContext } from '@/lib/types';
 import { buildMarkedUndiciRequest } from '@/lib/utils/build-marked-undici-request';
-import { ensureServiceRegistered } from '@/lib/utils/ensure-service-registered';
 import { prepareBody } from '@/lib/utils/prepare-body';
+import { Service } from '@/setup/client.types';
 
 export class FetchLogger {
   private readonly logEndpoint: string = LOG_ENDPOINT;
@@ -40,12 +39,6 @@ export class FetchLogger {
     );
 
     try {
-      await ensureServiceRegistered(this.service, this.apiKey);
-    } catch (err) {
-      // swallow registration errors to avoid disrupting the main application flow
-    }
-
-    try {
       await fetch(this.logEndpoint, {
         method: 'POST',
         headers: {
@@ -54,8 +47,8 @@ export class FetchLogger {
         },
         body: JSON.stringify(markedRequest),
       });
-    } catch (err) {
-      // swallow errors to avoid disrupting the main application flow
+    } catch (_err) {
+      // swallow network errors
     }
   }
 }

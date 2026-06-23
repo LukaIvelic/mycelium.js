@@ -11,7 +11,10 @@ export function teeBody(body: unknown): [unknown, unknown] | null {
     body.pipe(b);
     return [a, b];
   }
-  if (body != null && typeof (body as any)[Symbol.asyncIterator] === 'function') {
+  if (
+    body != null &&
+    typeof (body as any)[Symbol.asyncIterator] === 'function'
+  ) {
     const source = body as AsyncIterable<Buffer | Uint8Array | string>;
     const materialized: Promise<Buffer> = (async () => {
       const chunks: Buffer[] = [];

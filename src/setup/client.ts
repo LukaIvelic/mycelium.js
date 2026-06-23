@@ -1,8 +1,18 @@
+import {
+  AssertReadyMessages,
+  RUNTIME_SETTINGS_ENDPOINT,
+} from '@/lib/constants';
 import { subscribeToHttp } from '@/lib/instrumentation/http-subscriber';
-import { CaptureBodyOptions, FilterHeaderOptions, Service } from '@/setup/client.types';
 import { subscribeToUndici } from '@/lib/instrumentation/undici-subscriber';
-import { AssertReadyMessages } from '@/lib/constants';
-import { ensureServiceRegistered } from '@/lib/utils/ensure-service-registered';
+import { observePerformance } from '@/lib/observers/performance-observer';
+import { HeaderFilterLevel } from '@/lib/types';
+import {
+  CaptureBodyOptions,
+  FilterHeaderOptions,
+  RemoteRuntimeSettings,
+  RemoteSettingsOptions,
+  Service,
+} from '@/setup/client.types';
 
 class MyceliumBuilder {
   private serviceValue: Service = { key: '', name: '', origin: '' };
@@ -12,6 +22,8 @@ class MyceliumBuilder {
   private captureStreamBodiesValue: boolean = false;
   private captureBodyOptionsValue: CaptureBodyOptions = {};
   private filterHeaderOptionsValue: FilterHeaderOptions = {};
+  private performanceMetricsValue: boolean = false;
+  private remoteSettingsOptionsValue?: RemoteSettingsOptions;
 
   defineService(service: Service): this {
     this.serviceValue = service;
@@ -48,7 +60,21 @@ class MyceliumBuilder {
     return this;
   }
 
+  capturePerformanceMetrics(): this {
+    this.performanceMetricsValue = true;
+    return this;
+  }
+
+  useRemoteSettings(options: RemoteSettingsOptions = {}): this {
+    this.remoteSettingsOptionsValue = options;
+    return this;
+  }
+
   initialize() {
+    if (this.remoteSettingsOptionsValue) {
+      throw new Error(AssertReadyMessages.REMOTE_SETTINGS_INITIALIZE);
+    }
+
     return new MyceliumClient(
       this.serviceValue,
       this.apiKeyValue,
@@ -57,7 +83,26 @@ class MyceliumBuilder {
       this.captureStreamBodiesValue,
       this.captureBodyOptionsValue,
       this.filterHeaderOptionsValue,
+      this.performanceMetricsValue,
     );
+  }
+
+  async initializeAsync() {
+    const client = new MyceliumClient(
+      this.serviceValue,
+      this.apiKeyValue,
+      this.subscribeToFetchValue,
+      this.subscribeToHttpValue,
+      this.captureStreamBodiesValue,
+      this.captureBodyOptionsValue,
+      this.filterHeaderOptionsValue,
+      this.performanceMetricsValue,
+      this.remoteSettingsOptionsValue,
+      false,
+    );
+
+    await client.initializeAsync();
+    return client;
   }
 }
 
@@ -70,6 +115,8 @@ class MyceliumClient {
   private captureBodyOptionsValue: CaptureBodyOptions = {};
   private initialized: boolean = false;
   private filterHeaderOptionsValue: FilterHeaderOptions = {};
+  private performanceMetricsValue: boolean = false;
+  private remoteSettingsOptionsValue?: RemoteSettingsOptions;
 
   constructor(
     serviceValue: Service,
@@ -79,6 +126,9 @@ class MyceliumClient {
     captureStreamBodiesValue: boolean = false,
     captureBodyOptionsValue: CaptureBodyOptions = {},
     filterHeaderOptionsValue: FilterHeaderOptions = {},
+    performanceMetricsValue: boolean = false,
+    remoteSettingsOptionsValue?: RemoteSettingsOptions,
+    autoInitialize: boolean = true,
   ) {
     this.serviceValue = serviceValue;
     this.apiKeyValue = apiKeyValue;
@@ -87,13 +137,27 @@ class MyceliumClient {
     this.subscribeToFetchValue = subscribeToFetchValue;
     this.subscribeToHttpValue = subscribeToHttpValue;
     this.filterHeaderOptionsValue = filterHeaderOptionsValue;
+    this.performanceMetricsValue = performanceMetricsValue;
+    this.remoteSettingsOptionsValue = remoteSettingsOptionsValue;
 
-    this.initialize();
+    if (autoInitialize) {
+      this.initialize();
+    }
   }
 
   initialize() {
     this.assertReady();
-    void ensureServiceRegistered(this.serviceValue, this.apiKeyValue).catch(() => undefined);
+    this.startInstrumentation();
+  }
+
+  async initializeAsync(): Promise<void> {
+    this.assertReady();
+    await this.applyRemoteSettings();
+    this.startInstrumentation();
+  }
+
+  private startInstrumentation(): void {
+    if (this.initialized) return;
 
     if (this.subscribeToFetchValue) {
       subscribeToUndici({
@@ -104,6 +168,7 @@ class MyceliumClient {
         apiKey: this.apiKeyValue,
       });
     }
+
     if (this.subscribeToHttpValue) {
       subscribeToHttp({
         bodyMaxBytes: this.captureBodyOptionsValue.maxBytes,
@@ -114,7 +179,68 @@ class MyceliumClient {
       });
     }
 
+    if (this.performanceMetricsValue) {
+      observePerformance();
+    }
+
     this.initialized = true;
+  }
+
+  private async applyRemoteSettings(): Promise<void> {
+    if (!this.remoteSettingsOptionsValue) return;
+
+    try {
+      const settings = await this.fetchRemoteSettings();
+      this.applyRuntimeSettings(settings);
+    } catch (err) {
+      if (this.remoteSettingsOptionsValue.required) {
+        throw err;
+      }
+    }
+  }
+
+  private async fetchRemoteSettings(): Promise<RemoteRuntimeSettings> {
+    const endpoint =
+      this.remoteSettingsOptionsValue?.endpoint ?? RUNTIME_SETTINGS_ENDPOINT;
+    const url = new URL(endpoint);
+    url.searchParams.set('origin', this.serviceValue.origin);
+    url.searchParams.set('key', this.serviceValue.key);
+
+    const response = await fetch(url, {
+      headers: {
+        'x-api-key': this.apiKeyValue,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Mycelium remote settings failed: ${response.status}`);
+    }
+
+    return (await response.json()) as RemoteRuntimeSettings;
+  }
+
+  private applyRuntimeSettings(settings: RemoteRuntimeSettings): void {
+    this.performanceMetricsValue = settings.performance.captureMetrics;
+    this.subscribeToFetchValue = settings.communication.subscribeToFetch;
+    this.subscribeToHttpValue = settings.communication.subscribeToHttp;
+    this.captureStreamBodiesValue = settings.communication.captureStreamBodies;
+    this.captureBodyOptionsValue = {
+      ...this.captureBodyOptionsValue,
+      maxBytes: settings.communication.captureBody
+        ? settings.communication.bodyMaxBytes
+        : 0,
+    };
+
+    const headerFilterLevel = HeaderFilterLevel[
+      settings.communication.headerFilterLevel
+    ] as HeaderFilterLevel | undefined;
+
+    if (headerFilterLevel !== undefined) {
+      this.filterHeaderOptionsValue = {
+        ...this.filterHeaderOptionsValue,
+        level: headerFilterLevel,
+      };
+    }
   }
 
   private assertReady(): void {

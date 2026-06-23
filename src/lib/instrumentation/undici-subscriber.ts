@@ -1,12 +1,16 @@
 import diagnosticsChannel from 'node:diagnostics_channel';
 import { performance } from 'node:perf_hooks';
-import { InflightRequest, DiagnosticsChannel, HeaderFilterLevel } from '@/lib/types';
 import { FetchLogger } from '@/lib/logging/network/fetch-logger';
-import { Service } from '@/setup/client.types';
+import {
+  DiagnosticsChannel,
+  HeaderFilterLevel,
+  InflightRequest,
+} from '@/lib/types';
 import { childContext } from '@/lib/utils/context';
 import { injectTraceHeaders } from '@/lib/utils/inject';
-import { prepareBody } from '@/lib/utils/prepare-body';
 import { isLogEndpoint } from '@/lib/utils/is-internal-origin';
+import { prepareBody } from '@/lib/utils/prepare-body';
+import { Service } from '@/setup/client.types';
 
 interface UndiciSubscriberConfig {
   service: Service;
@@ -43,31 +47,51 @@ export function subscribeToUndici(config: UndiciSubscriberConfig) {
     inflightRequests.delete(message.request);
   };
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.UndiciRequestCreate, (message: any) => {
-    if (isLogEndpoint(message.request?.origin ?? '', message.request?.path ?? '')) return;
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.UndiciRequestCreate,
+    (message: any) => {
+      if (
+        isLogEndpoint(
+          message.request?.origin ?? '',
+          message.request?.path ?? '',
+        )
+      )
+        return;
+      if (String(message.request?.method ?? '').toUpperCase() === 'OPTIONS')
+        return;
 
-    const ctx = childContext();
-    const preparedBody = prepareBody(message.request, config.captureStreamBodies);
+      const ctx = childContext();
+      const preparedBody = prepareBody(
+        message.request,
+        config.captureStreamBodies,
+      );
 
-    injectTraceHeaders(message.request, ctx);
+      injectTraceHeaders(message.request, ctx);
 
-    inflightRequests.set(message.request, {
-      startedAt: performance.now(),
-      body: preparedBody,
-      ctx,
-    });
-  });
+      inflightRequests.set(message.request, {
+        startedAt: performance.now(),
+        body: preparedBody,
+        ctx,
+      });
+    },
+  );
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.UndiciRequestHeaders, (message: any) => {
-    const existing = inflightRequests.get(message.request);
-    if (!existing) return;
-    inflightRequests.set(message.request, {
-      ...existing,
-      statusCode: Number(message.response.statusCode) || 0,
-    });
-  });
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.UndiciRequestHeaders,
+    (message: any) => {
+      const existing = inflightRequests.get(message.request);
+      if (!existing) return;
+      inflightRequests.set(message.request, {
+        ...existing,
+        statusCode: Number(message.response.statusCode) || 0,
+      });
+    },
+  );
 
-  diagnosticsChannel.subscribe(DiagnosticsChannel.UndiciRequestTrailers, finalize);
+  diagnosticsChannel.subscribe(
+    DiagnosticsChannel.UndiciRequestTrailers,
+    finalize,
+  );
 
   diagnosticsChannel.subscribe(DiagnosticsChannel.UndiciRequestError, finalize);
 }
