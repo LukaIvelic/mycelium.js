@@ -9,5 +9,7 @@ export function isLogEndpoint(origin: string, path: string): boolean {
     candidates.push(`https://${value}`);
   }
 
-  return candidates.some((candidate) => candidate.startsWith(LOG_ENDPOINT));
+  return candidates.some(
+    (candidate) => candidate.startsWith(LOG_ENDPOINT),
+  );
 }
