@@ -19,7 +19,6 @@
     "noFallthroughCasesInSwitch": false,
     "outDir": "./dist",
     "rootDir": "./src",
-    "ignoreDeprecations": "6.0",
     "types": ["node"],
     "baseUrl": "./src",
     "paths": {
