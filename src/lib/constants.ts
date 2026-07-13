@@ -1,6 +1,9 @@
 import { BodyBytes } from '@/lib/types';
 
-export const API_ENDPOINT = 'http://localhost:8000/api';
+export const DEFAULT_API_ENDPOINT = 'https://www.myceliums.dev/api';
+export const API_ENDPOINT = (
+  process.env.MYCELIUM_API_ENDPOINT ?? DEFAULT_API_ENDPOINT
+).replace(/\/$/, '');
 export const LOG_ENDPOINT = `${API_ENDPOINT}/logs`;
 export const RUNTIME_SETTINGS_ENDPOINT = `${API_ENDPOINT}/integrations/runtime-settings`;
 export const BODY_MAX_BYTES = BodyBytes.FIVE_KB;
