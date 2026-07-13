@@ -56,10 +56,15 @@ export function subscribeToHttp(config: HttpSubscriberConfig) {
 
     const modifiedRequest = {
       ...message.request,
+      headers: message.request.headers,
+      host: message.request.headers?.host,
+      method: message.request.method,
+      path: message.request.url ?? message.request.path,
+      protocol: message.request.socket?.encrypted ? 'https' : 'http',
+      rawHeaders: message.request.rawHeaders,
       statusCode: existingInflightRequest.statusCode,
       durationMs: performance.now() - existingInflightRequest.startedAt,
       body: existingInflightRequest.body,
-      headers: message.request.rawHeaders,
     };
 
     httpLogger.log(modifiedRequest, existingInflightRequest.ctx);

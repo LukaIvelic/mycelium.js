@@ -25,7 +25,11 @@ export async function buildMarkedHttpRequest(
   service: Service,
   ctx: TraceContext,
 ): Promise<MarkedUndiciRequest> {
-  const headers = safeHeaders(request.rawHeaders ?? [], headerFilterLevel);
+  const requestHeaders =
+    Array.isArray(request.rawHeaders) && request.rawHeaders.length > 0
+      ? request.rawHeaders
+      : request.headers ?? [];
+  const headers = safeHeaders(requestHeaders, headerFilterLevel);
   const { body, bodySize } = await serializeAndTruncate(
     preparedBody,
     bodyMaxBytes,
@@ -35,10 +39,13 @@ export async function buildMarkedHttpRequest(
   const timestamp = new Date().toISOString();
   const method: string = request.method ?? '';
   const protocol = String(
-    request.protocol ?? (request._encrypted ? 'https' : 'http'),
+    request.protocol ??
+      (request._encrypted || request.socket?.encrypted ? 'https' : 'http'),
   ).replace(/:$/, '');
-  const host: string = request.host ?? request.hostname ?? headers.host ?? '';
-  const origin = `${protocol}://${host}`;
+  const host = String(request.host ?? request.hostname ?? headers.host ?? '')
+    .trim()
+    .replace(/\/+$/, '');
+  const origin = host ? `${protocol}://${host}` : '';
 
   return {
     method,
@@ -47,7 +54,7 @@ export async function buildMarkedHttpRequest(
     bodySizeKB: bodySizeKb,
     completed: !request.destroyed,
     aborted: request.destroyed ?? false,
-    path: request.path ?? '/',
+    path: request.path ?? request.url ?? '/',
     origin,
     protocol,
     idempotent: IDEMPOTENT_METHODS.has(method.toUpperCase()),
